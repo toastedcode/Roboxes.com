@@ -1,8 +1,8 @@
 <?php
 
-require_once '../common/database.php';
-require_once '../common/registryEntry.php';
-require_once '../common/time.php';
+require_once '../../common/database.php';
+require_once '../../common/registryEntry.php';
+require_once '../../common/time.php';
 
 function getParam($paramName)
 {

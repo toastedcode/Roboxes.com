@@ -1,6 +1,6 @@
 <?php
 
-require_once 'common/database.php';
+require_once '../../common/database.php';
 
 function getParam($paramName)
 {
