@@ -38,6 +38,8 @@ class Time
    }
 }
 
+Time::init();
+
 /*
 $now = Time::now("Y-m-d H:i:s");
 $toMySql = Time::toMySqlDate($now);
