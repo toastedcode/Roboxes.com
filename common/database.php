@@ -107,6 +107,16 @@ class RoboxesDatabase extends MySqlDatabase
       return ($result);
    }
    
+   public function getRegistryEntries($userId)
+   {
+      $userClause = empty($userId) ? "" : "WHERE userId = \"$userId\"";
+      $query = "SELECT * from registry $userClause ORDER BY chipId DESC;";
+      
+      $result = $this->query($query);
+      
+      return ($result);
+   }
+   
    public function existsInRegistry($chipId)
    {
       $query = "SELECT chipId from registry WHERE chipId = \"$chipId\";";
