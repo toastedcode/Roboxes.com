@@ -1,0 +1,3 @@
+RewriteEngine on
+RewriteCond %{REQUEST_URI} !^/roboxes/api/index.php$
+RewriteRule . /roboxes/api/index.php [QSA,L]
