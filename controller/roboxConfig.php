@@ -1,7 +1,7 @@
 <div id="roboxConfig" class="flex-vertical panel">
 
 <label>Name</label>
-<input type="text">
+<input id="robox-name-input" type="text">
 
 <label>API Key</label>
 <input type="text">

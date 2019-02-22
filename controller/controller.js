@@ -4,15 +4,19 @@ var ipAddress;
 
 var isConnecting = false;
 
+var loopTimer;
+
 var Panel = {
    FIRST : 0,
    CONTROL : 0,
    HARDWARE_CONFIG : 1,
    WIFI_CONFIG : 2,
-   ROBOX_CONFIG : 3,
-   LOGGER : 4,
-   VIDEO : 5,
-   LAST : 6
+   SERVER_CONFIG: 3,
+   ROBOX_CONFIG : 4,
+   LOGGER : 5,
+   VIDEO : 6,
+   CODE : 7,
+   LAST : 8
 };
 
 var currentPanel = Panel.CONTROL;
@@ -60,9 +64,11 @@ function getPanel(panel)
       "control",
       "hardwareConfig",
       "wifiConfig",
+      "serverConfig",
       "roboxConfig",
       "logger",
-      "video"
+      "video",
+      "code"
    ];
    
    var element = document.getElementById(elementNames[panel]);
@@ -76,20 +82,70 @@ function setup(initIpAddress)
    
    myRobox.handleMessage = function(message)
    {
-      if ((message.messageId == "sensorReading") &&
-            (message.source == "distanceSensor"))
-     {
-        document.getElementById("distance-sensor-display").value = message.value;
-     }
-     else if (message.messageId == "logMessage")
-     {
-        var element = document.getElementById("logs-display");
-        element.value += message.logLevel + ": " + message.message + "\n";
-     }
-     else
-     {
-        console.log(message.messageId);
-     }
+      if (message.messageId == "pong")
+      {
+         document.getElementById("robox-name-input").value = message.deviceId;
+      }
+      else if ((message.messageId == "sensorReading") &&
+               (message.source == "distanceSensor"))
+      {
+         document.getElementById("distance-sensor-display").value = message.value;
+      }
+      else if (message.messageId == "logMessage")
+      {
+         var element = document.getElementById("logs-display");
+         element.value += message.logLevel + ": " + message.message + "\n";
+      }
+      else if (message.messageId == "wifiConfig")
+      {
+         if (message.ssid)
+         {
+            var element = document.getElementById("wifi-ssid-input");
+            element.value = message.ssid;
+         }
+        
+         if (message.password)
+         {
+            var element = document.getElementById("wifi-password-input");
+            element.value = message.password;
+         }
+      }
+      else if (message.messageId == "serverConfig")
+      {
+         if (message.host)
+         {
+            var element = document.getElementById("server-host-input");
+            element.value = message.host;
+         }
+        
+         if (message.port)
+         {
+            var element = document.getElementById("server-port-input");
+            element.value = message.port;
+         }
+        
+         if (message.userId)
+         {
+            var element = document.getElementById("server-user-id-input");
+            element.value = message.userId;
+         }
+        
+         if (message.password)
+         {
+            var element = document.getElementById("server-password-input");
+            element.value = message.password;
+         }
+        
+         if (message.topic)
+         {
+            var element = document.getElementById("server-topic-input");
+            element.value = message.topic;
+         }
+      }
+      else
+      {
+         console.log(message.messageId);
+      }
    }
 
    myRobox.onConnected = function(message)
@@ -98,8 +154,29 @@ function setup(initIpAddress)
       setStatus("Disconnect", "led-green");
       isConnecting = false;
       
+      myRobox.ping();
+      myRobox.getWifiConfig();
+      myRobox.getServerConfig();
+      
       myRobox.subscribe("distanceSensor");
       myRobox.components["distanceSensor"].setUnits("CENTIMETERS");
+      
+      if (document.getElementById("setup-code-enabled-input").checked)
+      {
+         evaluateCode(document.getElementById("setup-code-input").value);
+      }
+
+      if (document.getElementById("loop-code-enabled-input").checked)
+      {
+         var millis = (document.getElementById("loop-code-period-input").value * 1000);
+         
+         if (millis > 0)
+         {
+            startLoopTimer(millis);
+         }
+      }
+
+      
    }
 
    myRobox.onDisconnected = function(message)
@@ -291,4 +368,61 @@ function onDistanceSensorEnabled(input)
    {
       myRobox.components['distanceSensor'].poll(0);
    }
+}
+
+function evaluateCode(code)
+{
+   eval(code);
+}
+
+function startLoopTimer(millis)
+{
+   clearTimeout(loopTimer);
+   
+   loopTimer = setInterval(function(){
+      evaluateCode(document.getElementById("loop-code-input").value);},
+      millis);
+}
+
+function stopLoopTimer()
+{
+   clearTimeout(loopTimer);
+}
+
+function onCodeEnabled(input)
+{
+   if ((input.id == "loop-code-enabled-input") ||
+       (input.id == "loop-code-period-input"))
+   {
+      var isEnabled = document.getElementById("loop-code-enabled-input").checked;
+      var millis = (document.getElementById("loop-code-period-input").value * 1000);
+      
+      if (isEnabled)
+      {
+         startLoopTimer(millis);
+      }
+      else
+      {
+         stopLoopTimer();
+      }
+   }
+}
+
+function updateWifiConfig()
+{
+   var ssid = document.getElementById("wifi-ssid-input").value;
+   var password = document.getElementById("wifi-password-input").value;
+   
+   myRobox.setWifiConfig(ssid, password);
+}
+
+function updateServerConfig()
+{
+   var host = document.getElementById("server-host-input").value;
+   var port = document.getElementById("server-port-input").value;
+   var userId = document.getElementById("server-user-id-input").value;
+   var password = document.getElementById("server-password-input").value;
+   var topic = document.getElementById("server-topic-input").value;
+   
+   myRobox.setServerConfig(host, port, userId, password, topic);
 }

@@ -141,6 +141,8 @@ function getParam($paramName)
 
 <body onload="setup('<?php echo getParam("ipAddress");?>')">
 
+   <button class="button" style="width: 250px; height: 50px;" onclick="var nextPanel = currentPanel - 1; if (nextPanel < Panel.FIRST) {nextPanel = (Panel.LAST - 1);} setPanel(nextPanel);">Prev Panel</button>
+
    <div id="controller-div" class="flex-vertical bordered">
    
       <div class="flex-horizontal">
@@ -154,11 +156,15 @@ function getParam($paramName)
       
       <?php include 'wifiConfig.php';?>
       
+      <?php include 'serverConfig.php';?>
+      
       <?php include 'roboxConfig.php';?>
       
       <?php include 'logger.php';?>
       
       <?php include 'video.php';?>
+      
+      <?php include 'code.php';?>
       
    </div>
    
