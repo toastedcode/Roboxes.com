@@ -1,11 +1,11 @@
-<?php 
+<?php
 
 require_once 'common/registryEntry.php';
 
 function getParam($paramName)
 {
    $value = "";
-   
+
    if (isset($_POST[$paramName]))
    {
       $value= $_POST[$paramName];
@@ -14,7 +14,7 @@ function getParam($paramName)
    {
       $value= $_GET[$paramName];
    }
-   
+
    return ($value);
 }
 
@@ -65,9 +65,9 @@ $registryEntry = RegistryEntry::load(getParam("chipId"));
       }
    </script>
 
-   <h1>Robot Controller: <?php echo $registryEntry->roboxName?></h1>
+   <h1>Robot Controller: <?php if ($registryEntry) { echo $registryEntry->roboxName;} ?></h1>
 
-   <div>Robox address: <input type="text" id="roboxAddress" value="<?php echo $registryEntry->ipAddress?>"></div>
+   <div>Robox address: <input type="text" id="roboxAddress" value="<?php if ($registryEntry) {echo $registryEntry->ipAddress;} ?>"></div>
    <div>Camera address: <input type="text" id="camAddress"></div>
 
    <button onclick="myRobox.connect(getRoboxAddress(), 1975)">Connect</button>
