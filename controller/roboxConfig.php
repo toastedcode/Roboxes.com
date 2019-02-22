@@ -1,4 +1,4 @@
-<div id="roboxConfig" class="flex-vertical">
+<div id="roboxConfig" class="flex-vertical panel">
 
 <label>Name</label>
 <input type="text">

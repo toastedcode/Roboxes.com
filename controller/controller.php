@@ -1,3 +1,21 @@
+<?php 
+function getParam($paramName)
+{
+   $value = "";
+
+   if (isset($_POST[$paramName]))
+   {
+      $value= $_POST[$paramName];
+   }
+   else if (isset($_GET[$paramName]))
+   {
+      $value= $_GET[$paramName];
+   }
+
+   return ($value);
+}
+?>
+
 <!DOCTYPE html>
 <html>
 
@@ -79,6 +97,18 @@
         box-shadow: 0 5px #666;
         transform: translateY(4px);
       }
+      
+      .dpad {
+         width: 150px; 
+         height: 150px; 
+         justify-content:center; 
+         align-items:center;
+      }
+      
+      .dpad-button, .dpad-spacer, .server-toggle-button {
+         width: 50px;
+         height: 50px;
+      }
 
       body {
          background-image: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
@@ -99,19 +129,23 @@
       
       #controller-div {
          width: 300px; 
-         height: 600;
+         height: 600px;
       }   
+      
+      .panel {
+         display: none;
+      }
    </style>
 
 </head>
 
-<body onload="setup()">
+<body onload="setup('<?php echo getParam("ipAddress");?>')">
 
    <div id="controller-div" class="flex-vertical bordered">
    
       <div class="flex-horizontal">
          <button id="connect-button" class="button" style="width: 150px; height: 50;" onclick="connect()">Connect</button>
-         <div id="status-led"></div>
+         <div id="status-led" class="led-red"></div>
       </div>
       
       <?php include 'control.php';?>
@@ -121,6 +155,10 @@
       <?php include 'wifiConfig.php';?>
       
       <?php include 'roboxConfig.php';?>
+      
+      <?php include 'logger.php';?>
+      
+      <?php include 'video.php';?>
       
    </div>
    

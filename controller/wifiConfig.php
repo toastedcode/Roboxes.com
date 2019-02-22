@@ -1,4 +1,4 @@
-<div id="wifiConfig" class="flex-vertical">
+<div id="wifiConfig" class="flex-vertical panel">
 
 <label>SSID</label>
 <input type="text">
