@@ -9,6 +9,7 @@
    <div class="flex-horizontal"><label>Reverse</label><input id="motor2-reverse_input" type="checkbox"></div>
    
    <label>Motor Pair</label>
+   <input id="motor-pair-trim-input" style="width:200px; height:20px;" type="range" min="-100" max="100" value="0">
    <div class="flex-horizontal"><label>Reverse</label><input id="motor-pair-reverse_input" type="checkbox"></div>
    
    <label>Servo 1</label>

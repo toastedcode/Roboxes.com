@@ -78,13 +78,20 @@ function getPanel(panel)
 
 function setup(initIpAddress)
 {
+   if (!initIpAddress || (initIpAddress == ""))
+   {
+      initIpAddress = prompt("Please enter the IP address of your Robox.");
+   }
+   
    myRobox = new Robox();
    
    myRobox.handleMessage = function(message)
    {
       if (message.messageId == "pong")
       {
-         document.getElementById("robox-name-input").value = message.deviceId;
+         document.getElementById("robox-name-input").value = message.deviceName;
+         document.getElementById("robox-api-key-input").value = message.apiKey;
+         document.getElementById("robox-mode-input").value = message.mode;
       }
       else if ((message.messageId == "sensorReading") &&
                (message.source == "distanceSensor"))
@@ -205,7 +212,7 @@ function setup(initIpAddress)
    if (initIpAddress != "")
    {
       ipAddress = initIpAddress;
-      myRobox.connect(ipAddress, 1975);
+      connect();
    }
    else
    {
@@ -239,6 +246,86 @@ function setStatus(text, led)
    element = document.getElementById("status-led");
    element.className = "";
    element.classList.add(led);
+}
+
+function constrain(value, limitMin, limitMax)
+{
+   return (Math.min(limitMax, Math.max(limitMin, value)));
+}
+
+function map(value, fromLow, fromHigh, toLow, toHigh)
+{
+   return (toLow + (toHigh - toLow) * ((value - fromLow) / (fromHigh - fromLow)));
+}
+
+function transformAngle(componentId, angle)
+{
+   var limitMin = 0;
+   var limitMax = 180;
+   var reversed = false;
+   
+   if (componentId == "servo1")
+   {
+      var values = document.getElementById("servo1-limits-input").noUiSlider.get();
+      
+      limitMin = Math.round(values[0]);
+      limitMax = Math.round(values[1]);
+      
+      reversed = document.getElementById("servo1-reverse_input").checked;
+   }
+   else if (componentId == "servo2")
+   {
+      var values = document.getElementById("servo2-limits-input").noUiSlider.get();
+      
+      limitMin = Math.round(values[0]);
+      limitMax = Math.round(values[1]);
+      
+      reversed = document.getElementById("servo2-reverse_input").checked;
+   }
+   
+   if (reversed)
+   {
+      limitMin = [limitMax, limitMax = limitMin][0];  // one line swap
+   }
+   
+   var transformedAngle = map(angle, 0, 180, limitMin, limitMax);
+   
+   return (transformedAngle);
+}
+
+function transformSpeed(componentId, speed)
+{
+   var limitMin = 0;
+   var limitMax = 100;
+   var reversed = false;
+   
+   if (componentId == "motor1")
+   {
+      var values = document.getElementById("motor1-limits-input").noUiSlider.get();
+      
+      limitMin = Math.round(values[0]);
+      limitMax = Math.round(values[1]);
+      
+      reversed = document.getElementById("motor1-reverse_input").checked;
+   }
+   else if (componentId == "motor2")
+   {
+      var values = document.getElementById("motor2-limits-input").noUiSlider.get();
+      
+      limitMin = Math.round(values[0]);
+      limitMax = Math.round(values[1]);
+      
+      reversed = document.getElementById("motor2-reverse_input").checked;
+   }
+   
+   if (reversed)
+   {
+      limitMin = [limitMax, limitMax = limitMin][0];  // one line swap
+   }
+   
+   var transformedSpeed = map(speed, 0, 100, limitMin, limitMax);
+   
+   return (transformedSpeed);
 }
 
 function onDpadButtonUpdate(button, isDown)
@@ -312,11 +399,11 @@ function onServoToggleButtonUpdate(button, isDown)
       {
          if (isDown)
          {
-            myRobox.components["servo1"].rotate(180);
+            myRobox.components["servo1"].rotate(transformAngle("servo1", 180));
          }
          else
          {
-            myRobox.components["servo1"].rotate(0);
+            myRobox.components["servo1"].rotate(transformAngle("servo1", 0));
          }
          break;
       }
@@ -325,11 +412,11 @@ function onServoToggleButtonUpdate(button, isDown)
       {
          if (isDown)
          {
-            myRobox.components["servo2"].rotate(180);
+            myRobox.components["servo2"].rotate(transformAngle("servo2", 180));
          }
          else
          {
-            myRobox.components["servo2"].rotate(0);
+            myRobox.components["servo2"].rotate(transformAngle("servo2", 0));
          }
          break;
       }
@@ -370,6 +457,12 @@ function onDistanceSensorEnabled(input)
    }
 }
 
+function onVideoSourceUpdate()
+{
+   document.getElementById("video-preview").src = document.getElementById("video-source-input").value;
+   document.getElementById("video-display").src = document.getElementById("video-source-input").value;
+}
+
 function evaluateCode(code)
 {
    eval(code);
@@ -406,6 +499,17 @@ function onCodeEnabled(input)
          stopLoopTimer();
       }
    }
+}
+
+function updateRoboxConfig()
+{
+   var deviceName = document.getElementById("robox-name-input").value;
+   var apiKey = document.getElementById("robox-api-key-input").value;
+   var mode = document.getElementById("robox-mode-input").value;
+   
+   myRobox.setProperty("deviceName", deviceName);
+   myRobox.setProperty("apiKey", apiKey);
+   myRobox.setProperty("mode", mode);
 }
 
 function updateWifiConfig()
