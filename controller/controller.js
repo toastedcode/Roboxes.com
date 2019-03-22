@@ -19,6 +19,23 @@ var Panel = {
    LAST : 8
 };
 
+var Modal = {
+   FIRST : 0,
+   SELECT_CONNECTION_MODE : 0,
+   LOST_CONNECTION : 1,
+   ENTER_IP_ADDRESS : 2,
+   ENTER_SERVER_CONFIG : 3,
+   LAST : 4
+};
+
+var ConnectionMode = {
+   FIRST : 0,
+   AP : 0,
+   LAN : 1,
+   INTERNET : 2,
+   LAST : 2
+}
+
 var currentPanel = Panel.CONTROL;
 
 function setStatus(text, led)
@@ -29,6 +46,24 @@ function setStatus(text, led)
    element = document.getElementById("status-led");
    element.className = "";
    element.classList.add(led);
+}
+
+function getPanel(panel)
+{
+   var elementNames = [
+      "control",
+      "hardwareConfig",
+      "wifiConfig",
+      "serverConfig",
+      "roboxConfig",
+      "logger",
+      "video",
+      "code"
+   ];
+   
+   var element = document.getElementById(elementNames[panel]);
+
+   return (element);
 }
 
 function setPanel(panel)
@@ -58,31 +93,52 @@ function hidePanel(panel)
    }
 }
 
-function getPanel(panel)
+function getModal(modal)
 {
    var elementNames = [
-      "control",
-      "hardwareConfig",
-      "wifiConfig",
-      "serverConfig",
-      "roboxConfig",
-      "logger",
-      "video",
-      "code"
+      "select-connection-mode-dialog",
+      "lost-connection-dialog",
+      "enter-ip-address-dialog",
+      "enter-server-config-dialog",
    ];
    
-   var element = document.getElementById(elementNames[panel]);
+   var element = document.getElementById(elementNames[modal]);
 
    return (element);
 }
 
-function setup(initIpAddress)
+function showModal(modal)
 {
-   if (!initIpAddress || (initIpAddress == ""))
-   {
-      initIpAddress = prompt("Please enter the IP address of your Robox.");
-   }
+   var element = getModal(modal);
    
+   if (element)
+   {
+      element.style.display = "flex";
+   }   
+}
+
+function hideModal(modal)
+{
+   if (modal != null)
+   {
+      var element = getModal(modal);
+      
+      if (element)
+      {
+         element.style.display = "none";
+      }
+   }
+   else
+   {
+      for (var i = Modal.FIRST; i < Modal.LAST; i++)
+      {
+         hideModal(i);
+      }
+   }
+}
+
+function setup()
+{
    myRobox = new Robox();
    
    myRobox.handleMessage = function(message)
@@ -182,8 +238,6 @@ function setup(initIpAddress)
             startLoopTimer(millis);
          }
       }
-
-      
    }
 
    myRobox.onDisconnected = function(message)
@@ -208,33 +262,76 @@ function setup(initIpAddress)
    }
    
    showPanel(currentPanel);
-   
-   if (initIpAddress != "")
+
+   showModal(Modal.SELECT_CONNECTION_MODE);
+}
+
+function onConnectionStateToggled()
+{
+   if ((myRobox.isConnected() == true) ||
+       (isConnecting == true))
    {
-      ipAddress = initIpAddress;
-      connect();
+      disconnect();
    }
    else
    {
-      alert("No IP address specified.");
+      showModal(Modal.SELECT_CONNECTION_MODE);
    }
 }
 
-function connect()
+function connect(mode)
 {
-   if (isConnecting == false)
+   if ((myRobox.isConnected() == false) ||
+       (isConnecting == false))
    {
-      if (myRobox.isConnected() == false)
+      switch (mode)
       {
-         setStatus("...", "led-yellow");
-         myRobox.connect(ipAddress, 1975);
-         isConnecting = true;
+         case ConnectionMode.AP:
+         {
+            myRobox.connect("192.168.4.1", 1975);
+            setStatus("...", "led-yellow");
+            break;
+         }
+         
+         case ConnectionMode.LAN:
+         {
+            if (ipAddress != "")
+            {
+               myRobox.connect(ipAddress, 1975);
+               
+               setStatus("...", "led-yellow");
+               isConnecting = true;
+            }
+            else
+            {
+               showModal(Modal.ENTER_IP_ADDRESS);
+            }
+            break;
+         }
+         
+         case ConnectionMode.INTERNET:
+         {
+            var host = document.getElementById("server-host-input").value;
+            var port = document.getElementById("server-port-input").value;
+            var topic = document.getElementById("server-topic-input").value;
+            
+            myRobox.mqttConnect(host, port, topic);
+            
+            setStatus("...", "led-yellow");
+            isConnecting = true;
+            break;
+         }
       }
-      else
-      {
-         setStatus("Connect", "led-red");
-         myRobox.disconnect();
-      }
+   }
+}
+
+function disconnect()
+{
+   if ((myRobox.isConnected() == true) ||
+       (isConnecting == true))
+   {
+      setStatus("Connect", "led-red");
+      myRobox.disconnect();
    }
 }
 
@@ -529,4 +626,19 @@ function updateServerConfig()
    var topic = document.getElementById("server-topic-input").value;
    
    myRobox.setServerConfig(host, port, userId, password, topic);
+}
+
+function onConnectionModeSelected(connectionMode)
+{
+   connect(connectionMode);
+}
+
+function onIpAddressUpdated()
+{
+   ipAddress = document.getElementById("ip-address-input").value;
+   
+   if (ipAddress != "")
+   {
+      connect(ConnectionMode.LAN);
+   }
 }

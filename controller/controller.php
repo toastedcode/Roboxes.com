@@ -14,6 +14,28 @@ function getParam($paramName)
 
    return ($value);
 }
+
+function getIpAddress()
+{
+   $ipAddress = getParam("ipAddress");
+   
+   if ($ipAddress == "")
+   {
+      $chipId = getParam("chipId");
+      
+      if ($chipId != "")
+      {
+         $registryEntry = RegistryEntry::load(getParam("chipId"));
+         
+         if ($registryEntry)
+         {
+            $ipAddress = $registryEntry->ipAddress;
+         }
+      }
+   }
+   
+   return  ($ipAddress);
+}
 ?>
 
 <!DOCTYPE html>
@@ -25,9 +47,12 @@ function getParam($paramName)
    
    <title>Robox Controller</title>
    
+   <script src="../robox.js/thirdparty/mqttws31.js"></script>
+   <script src="../robox.js/thirdparty/mqtt-client.js"></script>
    <script src="../robox.js/communication/message.js"></script>
    <script src="../robox.js/communication/jsonProtocol.js"></script>
    <script src="../robox.js/communication/webSocketAdapter.js"></script>
+   <script src="../robox.js/communication/mqttAdapter.js"></script>
    <script src="../robox.js/component/sensor.js"></script>
    <script src="../robox.js/component/led.js"></script>
    <script src="../robox.js/component/motor.js"></script>
@@ -36,8 +61,10 @@ function getParam($paramName)
    <script src="../robox.js/robox.js"></script>
    
    <script src="../thirdparty/nouislider/nouislider.js"></script>
-   
+      
    <script src="controller.js"></script>
+   
+   <script>var ipAddress = "<?php $ipAddress ?>";</script>
    
    <link rel="stylesheet" type="text/css" href="../common/flex.css"/>
    <link rel="stylesheet" type="text/css" href="../thirdparty/nouislider/nouislider.css"/>
@@ -135,6 +162,47 @@ function getParam($paramName)
       .panel {
          display: none;
       }
+      
+      /* modal dialog (background) */
+      .modal {
+         display: none; /* Hidden by default */
+         position: fixed; /* Stay in place */
+         z-index: 1; /* Sit on top */
+         padding-top: 100px; /* Location of the box */
+         left: 0;
+         top: 0;
+         width: 100%; /* Full width */
+         height: 100%; /* Full height */
+         overflow: auto; /* Enable scroll if needed */
+         background-color: rgb(0,0,0); /* Fallback color */
+         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      }
+      
+      /* modal dialog (content) */
+      .modal-content {
+         background-color: #fefefe;
+         margin: auto;
+         padding: 20px;
+         border: 1px solid #888;
+         width: 300px;
+         height: 100px;
+      }
+      
+      /* The Close Button */
+      .close {
+        color: #aaaaaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      
+      .close:hover,
+      .close:focus {
+         color: #000;
+         text-decoration: none;
+         cursor: pointer;
+      }
+      
    </style>
 
 </head>
@@ -146,7 +214,7 @@ function getParam($paramName)
    <div id="controller-div" class="flex-vertical bordered">
    
       <div class="flex-horizontal">
-         <button id="connect-button" class="button" style="width: 150px; height: 50;" onclick="connect()">Connect</button>
+         <button id="connect-button" class="button" style="width: 150px; height: 50;" onclick="onConnectionStateToggled()">Connect</button>
          <div id="status-led" class="led-red"></div>
       </div>
       
@@ -165,6 +233,8 @@ function getParam($paramName)
       <?php include 'video.php';?>
       
       <?php include 'code.php';?>
+      
+      <?php include 'connection.php';?>
       
    </div>
    
